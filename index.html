@@ -1,235 +1,124 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kas DEMA-FAH - Catatan Keuangan</title>
-  <!-- Tailwind CSS via CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- SheetJS untuk Ekspor Excel -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    body { -webkit-overflow-scrolling: touch; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-  </style>
-</head>
-<body class="bg-gray-100 text-gray-800 pb-12">
+import pandas as pd
+import streamlit as st
 
-  <!-- Header -->
-  <header class="bg-blue-700 text-white p-4 shadow-md sticky top-0 z-10">
-    <div class="max-w-md mx-auto flex justify-between items-center">
-      <h1 class="text-base font-bold tracking-wide">Kas DEMA-FAH</h1>
-      <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-2 rounded-lg font-semibold shadow transition duration-150">
-        📊 Ekspor Excel
-      </button>
-    </div>
-  </header>
+# Konfigurasi halaman agar pas di layar iPhone
+st.set_page_config(
+    page_title="Keuangan BEM", page_icon="💰", layout="centered"
+)
 
-  <main class="max-w-md mx-auto p-4 space-y-4">
+st.title("📱 Keuangan BEM")
+st.write("Catat pemasukan dan pengeluaran dengan mudah dari iPhone kamu.")
 
-    <!-- Ringkasan Saldo -->
-    <section class="grid grid-cols-2 gap-3">
-      <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200">
-        <p class="text-xs text-gray-500 font-medium">Total Pemasukan</p>
-        <p id="totalMasuk" class="text-base font-bold text-green-600">Rp 0</p>
-      </div>
-      <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200">
-        <p class="text-xs text-gray-500 font-medium">Total Pengeluaran</p>
-        <p id="totalKeluar" class="text-base font-bold text-red-600">Rp 0</p>
-      </div>
-      <div class="col-span-2 bg-blue-50 p-3 rounded-xl border border-blue-200 text-center">
-        <p class="text-xs text-blue-600 font-medium">Sisa Saldo Kas</p>
-        <p id="sisaSaldo" class="text-lg font-bold text-blue-800">Rp 0</p>
-      </div>
-    </section>
+# 1. Inisialisasi Database Sederhana di Session State
+if "data_transaksi" not in st.session_state:
+    st.session_state.data_transaksi = pd.DataFrame(
+        columns=[
+            "Tanggal",
+            "Jenis",
+            "Kategori / Sumber",
+            "Peruntukan",
+            "Jumlah",
+        ]
+    )
 
-    <!-- Form Input Transaksi -->
-    <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-      <h2 class="text-sm font-bold text-gray-700 mb-3">Tambah Transaksi Baru</h2>
-      <form id="txForm" onsubmit="addTransaction(event)" class="space-y-3">
-        
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Jenis Transaksi</label>
-          <div class="grid grid-cols-2 gap-2">
-            <button type="button" id="btnMasuk" onclick="setType('masuk')" class="py-2 text-xs font-bold rounded-lg border text-white bg-green-600 border-green-600">
-              Pemasukan (+)
-            </button>
-            <button type="button" id="btnKeluar" onclick="setType('keluar')" class="py-2 text-xs font-bold rounded-lg border text-gray-600 bg-gray-100 border-gray-300">
-              Pengeluaran (-)
-            </button>
-          </div>
-        </div>
+# 2. Form Input Transaksi (Semua Isian Manual)
+with st.form("form_transaksi", clear_on_submit=True):
+    st.subheader("➕ Tambah Transaksi Baru")
 
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Tanggal</label>
-          <input type="date" id="txDate" required class="w-full text-sm p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
+    tanggal = st.date_input("Tanggal")
+    jenis = st.selectbox("Jenis Transaksi", ["Pemasukan", "Pengeluaran"])
 
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Nominal (Rp)</label>
-          <input type="number" id="txAmount" min="1" placeholder="Contoh: 50000" required class="w-full text-sm p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
+    if jenis == "Pemasukan":
+        kategori = st.text_input(
+            "Sumber Dana",
+            placeholder="Contoh: Dosen Pembimbing, Iuran Ex-Off, Sponsor",
+        )
+    else:
+        kategori = st.text_input(
+            "Jenis Peruntukan",
+            placeholder="Contoh: Cetak Proposal, Sewa Alat, Konsumsi Rapat",
+        )
 
-        <div>
-          <label id="categoryLabel" class="block text-xs font-semibold text-gray-600 mb-1">Sumber Pemasukan (Ketik Manual)</label>
-          <input type="text" id="txCategory" placeholder="Contoh: Dari Dosen Pembina / Teman Ex-Off" required class="w-full text-sm p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
+    peruntukan = st.text_input(
+        "Keterangan Detail (Opsional)",
+        placeholder="Contoh: Rapat Koordinasi Divisi Musik",
+    )
+    jumlah = st.number_input("Jumlah (Rp)", min_value=0, step=1000)
 
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Keterangan / Catatan Tambahan</label>
-          <input type="text" id="txNotes" placeholder="Contoh: Dana awal prokrja / Print proposal" class="w-full text-sm p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
+    submit = st.form_submit_button("Simpan Transaksi")
 
-        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm py-2.5 rounded-lg shadow transition duration-150">
-          Simpan Transaksi
-        </button>
-      </form>
-    </section>
+    if submit:
+        if jumlah > 0 and kategori.strip() != "":
+            data_baru = pd.DataFrame(
+                {
+                    "Tanggal": [str(tanggal)],
+                    "Jenis": [jenis],
+                    "Kategori / Sumber": [kategori],
+                    "Peruntukan": [peruntukan],
+                    "Jumlah": [jumlah],
+                }
+            )
+            st.session_state.data_transaksi = pd.concat(
+                [st.session_state.data_transaksi, data_baru], ignore_index=True
+            )
+            st.success("Transaksi berhasil disimpan!")
+        else:
+            st.error(
+                "Pastikan sumber/kategori diisi dan jumlah nominal lebih dari"
+                " 0."
+            )
 
-    <!-- Riwayat Transaksi -->
-    <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-      <div class="flex justify-between items-center mb-3">
-        <h2 class="text-sm font-bold text-gray-700">Riwayat Transaksi LPJ</h2>
-        <span id="txCount" class="text-xs text-gray-500">0 data</span>
-      </div>
-      <div id="txList" class="space-y-2 max-h-80 overflow-y-auto pr-1">
-        <p class="text-xs text-center text-gray-400 py-4">Belum ada catatan transaksi.</p>
-      </div>
-    </section>
+st.divider()
 
-  </main>
+# 3. Ringkasan Saldo & Riwayat Transaksi yang Jelas di HP
+st.subheader("📊 Rekap & Riwayat Keuangan")
 
-  <script>
-    let transactions = JSON.parse(localStorage.getItem('dema_fah_kas_data')) || [];
-    let currentType = 'masuk';
+df = st.session_state.data_transaksi
 
-    document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
+if not df.empty:
+    # Hitung total masuk & keluar
+    total_masuk = df[df["Jenis"] == "Pemasukan"]["Jumlah"].sum()
+    col1, col2 = st.columns(2)
+    col1.metric("Total Pemasukan", f"Rp {total_masuk:,.0f}")
+    total_keluar = df[df["Jenis"] == "Pengeluaran"]["Jumlah"].sum()
+    col2.metric("Total Pengeluaran", f"Rp {total_keluar:,.0f}")
 
-    function setType(type) {
-      currentType = type;
-      const btnMasuk = document.getElementById('btnMasuk');
-      const btnKeluar = document.getElementById('btnKeluar');
-      const catLabel = document.getElementById('categoryLabel');
-      const catInput = document.getElementById('txCategory');
+    saldo_akhir = total_masuk - total_keluar
+    st.info(f"**Sisa Saldo Kas:** Rp {saldo_akhir:,.0f}")
 
-      if (type === 'masuk') {
-        btnMasuk.className = 'py-2 text-xs font-bold rounded-lg border text-white bg-green-600 border-green-600';
-        btnKeluar.className = 'py-2 text-xs font-bold rounded-lg border text-gray-600 bg-gray-100 border-gray-300';
-        catLabel.textContent = 'Sumber Pemasukan (Ketik Manual)';
-        catInput.placeholder = 'Contoh: Dari Dosen Pembina / Teman Ex-Off';
-      } else {
-        btnKeluar.className = 'py-2 text-xs font-bold rounded-lg border text-white bg-red-600 border-red-600';
-        btnMasuk.className = 'py-2 text-xs font-bold rounded-lg border text-gray-600 bg-gray-100 border-gray-300';
-        catLabel.textContent = 'Peruntukan Pengeluaran (Ketik Manual)';
-        catInput.placeholder = 'Contoh: Program Kerja / Ngeprint Proposal';
-      }
-    }
+    st.write("---")
+    st.write("### 📝 Daftar Riwayat Detail")
 
-    function addTransaction(e) {
-      e.preventDefault();
-      const date = document.getElementById('txDate').value;
-      const amount = parseFloat(document.getElementById('txAmount').value);
-      const category = document.getElementById('txCategory').value.trim();
-      const notes = document.getElementById('txNotes').value.trim();
+    # Menampilkan riwayat dalam bentuk list/kartu baris ke bawah agar tidak terpotong di iPhone
+    for index, row in df.iterrows():
+        # Beri warna ikon berbeda untuk pemasukan dan pengeluaran
+        ikon = "🟢" if row["Jenis"] == "Pemasukan" else "🔴"
 
-      const item = {
-        id: Date.now(),
-        date,
-        type: currentType,
-        amount,
-        category,
-        notes
-      };
+        with st.container():
+            st.markdown(f"**{ikon} {row['Tanggal']} — {row['Jenis']}**")
+            st.write(
+                f"• **Sumber/Peruntukan:** {row['Kategori / Sumber']}"
+            )
+            if row["Peruntukan"]:
+                st.write(f"• **Keterangan:** {row['Peruntukan']}")
+            st.write(
+                f"• **Jumlah:** **Rp {row['Jumlah']:,.0f}**"
+            )
+            st.markdown("---")
 
-      transactions.unshift(item);
-      saveAndRender();
+    # 4. Tombol Ekspor ke Excel/CSV
+    @st.cache_data
+    def convert_df_to_excel(dataframe):
+        return dataframe.to_csv(index=False).encode("utf-8")
 
-      document.getElementById('txAmount').value = '';
-      document.getElementById('txCategory').value = '';
-      document.getElementById('txNotes').value = '';
-    }
 
-    function deleteTransaction(id) {
-      if (confirm('Hapus pencatatan transaksi ini?')) {
-        transactions = transactions.filter(t => t.id !== id);
-        saveAndRender();
-      }
-    }
+    csv_data = convert_df_to_excel(df)
 
-    function saveAndRender() {
-      localStorage.setItem('dema_fah_kas_data', JSON.stringify(transactions));
-      renderList();
-      renderSummary();
-    }
-
-    function formatRupiah(num) {
-      return 'Rp ' + num.toLocaleString('id-ID');
-    }
-
-    function renderSummary() {
-      const totalMasuk = transactions.filter(t => t.type === 'masuk').reduce((acc, t) => acc + t.amount, 0);
-      const totalKeluar = transactions.filter(t => t.type === 'keluar').reduce((acc, t) => acc + t.amount, 0);
-      const sisa = totalMasuk - totalKeluar;
-
-      document.getElementById('totalMasuk').textContent = formatRupiah(totalMasuk);
-      document.getElementById('totalKeluar').textContent = formatRupiah(totalKeluar);
-      document.getElementById('sisaSaldo').textContent = formatRupiah(sisa);
-      document.getElementById('txCount').textContent = `${transactions.length} data`;
-    }
-
-    function renderList() {
-      const container = document.getElementById('txList');
-      if (transactions.length === 0) {
-        container.innerHTML = '<p class="text-xs text-center text-gray-400 py-4">Belum ada catatan transaksi.</p>';
-        return;
-      }
-
-      container.innerHTML = transactions.map(t => `
-        <div class="flex justify-between items-center p-3 rounded-lg border ${t.type === 'masuk' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}">
-          <div class="space-y-0.5">
-            <div class="flex items-center gap-2">
-              <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${t.type === 'masuk' ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}">
-                ${t.type === 'masuk' ? 'MASUK' : 'KELUAR'}
-              </span>
-              <span class="text-xs text-gray-500">${t.date}</span>
-            </div>
-            <p class="text-xs font-semibold text-gray-800">${t.category}</p>
-            ${t.notes ? `<p class="text-[11px] text-gray-500 italic">${t.notes}</p>` : ''}
-          </div>
-          <div class="text-right">
-            <p class="text-xs font-bold ${t.type === 'masuk' ? 'text-green-700' : 'text-red-700'}">
-              ${t.type === 'masuk' ? '+' : '-'}${formatRupiah(t.amount)}
-            </p>
-            <button onclick="deleteTransaction(${t.id})" class="text-[10px] text-gray-400 hover:text-red-600 mt-1">Hapus</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function exportToExcel() {
-      if (transactions.length === 0) {
-        alert('Belum ada data transaksi untuk diekspor!');
-        return;
-      }
-
-      const excelData = transactions.map((t, index) => ({
-        'No': transactions.length - index,
-        'Tanggal': t.date,
-        'Jenis Transaksi': t.type === 'masuk' ? 'Pemasukan' : 'Pengeluaran',
-        'Kategori / Sumber / Peruntukan': t.category,
-        'Keterangan Tambahan': t.notes || '-',
-        'Pemasukan (Rp)': t.type === 'masuk' ? t.amount : 0,
-        'Pengeluaran (Rp)': t.type === 'keluar' ? t.amount : 0
-      }));
-
-      const worksheet = XLSX.utils.json_to_sheet(excelData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "LPJ Kas DEMA-FAH");
-
-      XLSX.writeFile(workbook, `Laporan_Kas_DEMA_FAH_${new Date().toISOString().split('T')[0]}.xlsx`);
-    }
-
-    renderSummary();
-    renderList();
-  </script>
-</body>
-</html>
+    st.download_button(
+        label="📥 Download Data ke Format Spreadsheet/CSV",
+        data=csv_data,
+        file_name="Laporan_Keuangan_BEM.csv",
+        mime="text/csv",
+    )
+else:
+    st.warning("Belum ada data transaksi yang dicatat.")
