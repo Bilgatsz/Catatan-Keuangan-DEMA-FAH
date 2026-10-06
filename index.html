@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kas BEM - Pencatatan Keuangan</title>
+  <title>Kas BEM FAH - Kabinet Senapati</title>
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- SheetJS untuk Ekspor Excel -->
@@ -14,39 +14,64 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
     }
     
-    /* Watermark Latar Belakang - Penggabungan 2 Logo */
+    /* Watermark Latar Belakang */
     .watermark-container {
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       width: 90%;
-      max-width: 360px;
+      max-width: 380px;
       display: flex;
       justify-content: center;
-      items-center: center;
-      gap: 12px;
-      opacity: 0.08; /* Dibuat lembut agar teks tetap jelas */
+      align-items: center;
+      gap: 16px;
+      opacity: 0.07;
       pointer-events: none;
       z-index: 0;
     }
 
     .watermark-img {
-      width: 48%;
+      width: 45%;
       height: auto;
       object-fit: contain;
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+      filter: drop-shadow(0 8px 12px rgba(0,0,0,0.2));
     }
 
-    /* Logo Ikon di Header */
-    .header-logo {
-      height: 34px;
-      width: auto;
-      object-fit: contain;
+    /* Keyframes Animasi Modal Pop-up */
+    @keyframes modalSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .animate-modal {
+      animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Keyframes Animasi Masuk Kartu Transaksi */
+    @keyframes cardFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-card {
+      animation: cardFadeIn 0.3s ease-out forwards;
     }
   </style>
 </head>
-<body class="bg-gray-100 text-gray-800 pb-12 min-h-screen relative">
+<body class="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 text-gray-800 pb-12 min-h-screen relative overflow-x-hidden">
 
   <!-- Watermark Latar Belakang (Logo DEMA-F & Logo Senapati) -->
   <div class="watermark-container">
@@ -55,113 +80,137 @@
   </div>
 
   <!-- Header -->
-  <header class="bg-blue-800 text-white p-3.5 shadow-md sticky top-0 z-10">
+  <header class="bg-blue-900/90 backdrop-blur-md text-white p-3.5 shadow-lg sticky top-0 z-20 border-b border-blue-700/50">
     <div class="max-w-md mx-auto flex justify-between items-center">
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2.5">
         <!-- Kombinasi Dua Logo di Header -->
-        <div class="flex items-center gap-1.5 bg-white/10 px-2 py-1 rounded-lg backdrop-blur-xs border border-white/20">
-          <img src="logo dema.jpeg" alt="Logo DEMA" class="header-logo">
-          <span class="text-white/40 text-xs font-light">|</span>
-          <img src="LOGO SENAPATI BIRU.jpg" alt="Logo Senapati" class="header-logo">
+        <div class="flex items-center gap-1.5 bg-white/10 px-2 py-1 rounded-xl backdrop-blur-md border border-white/20 shadow-inner">
+          <img src="logo dema.jpeg" alt="Logo DEMA" class="h-8 w-auto object-contain">
+          <span class="text-white/30 text-xs">|</span>
+          <img src="LOGO SENAPATI BIRU.jpg" alt="Logo Senapati" class="h-8 w-auto object-contain">
         </div>
         <div>
-          <h1 class="text-xs font-bold leading-tight">Pencatatan Kas BEM</h1>
-          <p class="text-[9px] text-blue-200 font-medium">Kabinet Senapati</p>
+          <h1 class="text-xs font-black tracking-wide leading-tight">Kas BEM FAH</h1>
+          <p class="text-[10px] text-blue-200 font-semibold tracking-wider uppercase">Kabinet Senapati</p>
         </div>
       </div>
-      <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white text-[11px] px-2.5 py-1.5 rounded-lg font-semibold shadow transition duration-150">
-        📊 Ekspor
+      
+      <button onclick="exportToExcel()" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white text-[11px] px-3 py-1.5 rounded-xl font-bold shadow-md transition-all duration-150 flex items-center gap-1">
+        <span>📊</span>
+        <span>Ekspor</span>
       </button>
     </div>
   </header>
 
-  <main class="max-w-md mx-auto p-4 space-y-4 relative z-1">
+  <main class="max-w-md mx-auto p-4 space-y-4 relative z-10">
 
     <!-- Ringkasan Saldo -->
     <section class="grid grid-cols-2 gap-3">
-      <div class="bg-white/90 backdrop-blur-md p-3 rounded-xl shadow-sm border border-gray-200">
-        <p class="text-xs text-gray-500 font-medium">Total Pemasukan</p>
-        <p id="totalMasuk" class="text-base font-bold text-green-600">Rp 0</p>
+      <div class="bg-white/80 backdrop-blur-md p-3.5 rounded-2xl shadow-sm border border-white/60 hover:shadow-md transition">
+        <div class="flex items-center gap-1.5 mb-1">
+          <span class="text-xs">💰</span>
+          <p class="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Total Masuk</p>
+        </div>
+        <p id="totalMasuk" class="text-base font-black text-emerald-600">Rp 0</p>
       </div>
-      <div class="bg-white/90 backdrop-blur-md p-3 rounded-xl shadow-sm border border-gray-200">
-        <p class="text-xs text-gray-500 font-medium">Total Pengeluaran</p>
-        <p id="totalKeluar" class="text-base font-bold text-red-600">Rp 0</p>
+
+      <div class="bg-white/80 backdrop-blur-md p-3.5 rounded-2xl shadow-sm border border-white/60 hover:shadow-md transition">
+        <div class="flex items-center gap-1.5 mb-1">
+          <span class="text-xs">💸</span>
+          <p class="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Total Keluar</p>
+        </div>
+        <p id="totalKeluar" class="text-base font-black text-rose-600">Rp 0</p>
       </div>
-      <div class="col-span-2 bg-blue-50/90 backdrop-blur-md p-3 rounded-xl border border-blue-200 text-center">
-        <p class="text-xs text-blue-600 font-medium">Sisa Saldo Kas</p>
-        <p id="sisaSaldo" class="text-lg font-bold text-blue-800">Rp 0</p>
+
+      <div class="col-span-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 rounded-2xl shadow-lg border border-blue-400/30 text-center relative overflow-hidden">
+        <div class="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
+        <p class="text-xs text-blue-100 font-medium tracking-wide mb-0.5">SISA SALDO KAS BEM</p>
+        <p id="sisaSaldo" class="text-2xl font-black tracking-tight">Rp 0</p>
       </div>
     </section>
 
     <!-- Form Input Transaksi -->
-    <section class="bg-white/95 backdrop-blur-md p-4 rounded-xl shadow-sm border border-gray-200">
-      <h2 class="text-sm font-bold text-gray-700 mb-3">Tambah Transaksi Baru</h2>
+    <section class="bg-white/85 backdrop-blur-md p-4.5 rounded-2xl shadow-sm border border-white/80 space-y-3.5">
+      <div class="flex items-center gap-2 border-b border-gray-100 pb-2">
+        <span class="text-base">✍️</span>
+        <h2 class="text-xs font-black uppercase tracking-wider text-gray-700">Tambah Transaksi Baru</h2>
+      </div>
+
       <form id="txForm" onsubmit="addTransaction(event)" class="space-y-3">
         
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Jenis Transaksi</label>
+          <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Jenis Transaksi</label>
           <div class="grid grid-cols-2 gap-2">
-            <button type="button" id="btnMasuk" onclick="setType('masuk')" class="py-2 text-xs font-bold rounded-lg border text-white bg-green-600 border-green-600">
-              Pemasukan (+)
+            <button type="button" id="btnMasuk" onclick="setType('masuk')" class="py-2.5 text-xs font-bold rounded-xl border transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 text-white bg-emerald-600 border-emerald-600 shadow-sm scale-105">
+              <span>📥</span> Pemasukan (+)
             </button>
-            <button type="button" id="btnKeluar" onclick="setType('keluar')" class="py-2 text-xs font-bold rounded-lg border text-gray-600 bg-gray-100 border-gray-300">
-              Pengeluaran (-)
+            <button type="button" id="btnKeluar" onclick="setType('keluar')" class="py-2.5 text-xs font-bold rounded-xl border transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 text-gray-600 bg-gray-50 border-gray-200">
+              <span>📤</span> Pengeluaran (-)
             </button>
           </div>
         </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Tanggal</label>
-          <input type="date" id="txDate" required class="w-full text-sm p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Tanggal</label>
+            <input type="date" id="txDate" required class="w-full text-xs p-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/90 shadow-inner">
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nominal (Rp)</label>
+            <input type="number" id="txAmount" min="1" placeholder="50000" required class="w-full text-xs p-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/90 shadow-inner">
+          </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Nominal (Rp)</label>
-          <input type="number" id="txAmount" min="1" placeholder="Contoh: 50000" required class="w-full text-sm p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+          <label id="categoryLabel" class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Sumber Pemasukan</label>
+          <input type="text" id="txCategory" placeholder="Contoh: Kas Anggota / Dana Dosen" required class="w-full text-xs p-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/90 shadow-inner">
         </div>
 
         <div>
-          <label id="categoryLabel" class="block text-xs font-semibold text-gray-600 mb-1">Sumber Pemasukan (Ketik Manual)</label>
-          <input type="text" id="txCategory" placeholder="Contoh: Dari Dosen Pembina / Teman Ex-Off" required class="w-full text-sm p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+          <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Catatan Tambahan (Opsional)</label>
+          <input type="text" id="txNotes" placeholder="Contoh: Print proposal prokerja X" class="w-full text-xs p-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/90 shadow-inner">
         </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Keterangan / Catatan Tambahan</label>
-          <input type="text" id="txNotes" placeholder="Contoh: Dana awal prokerja / Print proposal" class="w-full text-sm p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-        </div>
-
-        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm py-2.5 rounded-lg shadow transition duration-150">
-          Simpan Transaksi
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-black text-xs py-3 rounded-xl shadow-md hover:shadow-lg transition-all duration-150 flex items-center justify-center gap-1.5 mt-1">
+          <span>💾</span> Simpan Transaksi
         </button>
       </form>
     </section>
 
     <!-- Riwayat Transaksi -->
-    <section class="bg-white/95 backdrop-blur-md p-4 rounded-xl shadow-sm border border-gray-200">
+    <section class="bg-white/85 backdrop-blur-md p-4.5 rounded-2xl shadow-sm border border-white/80">
       <div class="flex justify-between items-center mb-3">
-        <h2 class="text-sm font-bold text-gray-700">Riwayat Transaksi LPJ</h2>
-        <span id="txCount" class="text-xs text-gray-500">0 data</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-base">📜</span>
+          <h2 class="text-xs font-black uppercase tracking-wider text-gray-700">Riwayat Transaksi LPJ</h2>
+        </div>
+        <span id="txCount" class="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">0 data</span>
       </div>
+
       <div id="txList" class="space-y-3 max-h-96 overflow-y-auto pr-1">
-        <p class="text-xs text-center text-gray-400 py-4">Belum ada catatan transaksi.</p>
+        <p class="text-xs text-center text-gray-400 py-6">Belum ada catatan transaksi.</p>
       </div>
     </section>
 
   </main>
 
-  <!-- Modal Pop-up Detail Transaksi -->
-  <div id="detailModal" class="fixed inset-0 bg-black/50 hidden justify-center items-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-xl space-y-4">
-      <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="text-base font-bold text-gray-800">Detail Transaksi</h3>
-        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 font-bold text-lg">&times;</button>
+  <!-- Modal Pop-up Detail Transaksi (Animasi Bounce) -->
+  <div id="detailModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs hidden justify-center items-center p-4 z-50 transition-opacity duration-200">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl space-y-4 animate-modal border border-gray-100">
+      <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">🔍</span>
+          <h3 class="text-sm font-black text-gray-800">Detail Transaksi</h3>
+        </div>
+        <button onclick="closeModal()" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 font-bold text-sm active:scale-90 transition">&times;</button>
       </div>
       
       <div class="space-y-3 text-xs" id="modalContent">
         <!-- Detail diisi lewat Javascript -->
       </div>
 
-      <button onclick="closeModal()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 rounded-lg text-xs">
+      <button onclick="closeModal()" class="w-full bg-gray-900 hover:bg-black active:scale-95 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-md">
         Tutup
       </button>
     </div>
@@ -181,15 +230,15 @@
       const catInput = document.getElementById('txCategory');
 
       if (type === 'masuk') {
-        btnMasuk.className = 'py-2 text-xs font-bold rounded-lg border text-white bg-green-600 border-green-600';
-        btnKeluar.className = 'py-2 text-xs font-bold rounded-lg border text-gray-600 bg-gray-100 border-gray-300';
-        catLabel.textContent = 'Sumber Pemasukan (Ketik Manual)';
-        catInput.placeholder = 'Contoh: Dari Dosen Pembina / Teman Ex-Off';
+        btnMasuk.className = 'py-2.5 text-xs font-bold rounded-xl border transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 text-white bg-emerald-600 border-emerald-600 shadow-sm scale-105';
+        btnKeluar.className = 'py-2.5 text-xs font-bold rounded-xl border transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 text-gray-600 bg-gray-50 border-gray-200';
+        catLabel.textContent = 'Sumber Pemasukan';
+        catInput.placeholder = 'Contoh: Kas Anggota / Dana Dosen';
       } else {
-        btnKeluar.className = 'py-2 text-xs font-bold rounded-lg border text-white bg-red-600 border-red-600';
-        btnMasuk.className = 'py-2 text-xs font-bold rounded-lg border text-gray-600 bg-gray-100 border-gray-300';
-        catLabel.textContent = 'Peruntukan Pengeluaran (Ketik Manual)';
-        catInput.placeholder = 'Contoh: Program Kerja / Ngeprint Proposal';
+        btnKeluar.className = 'py-2.5 text-xs font-bold rounded-xl border transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 text-white bg-rose-600 border-rose-600 shadow-sm scale-105';
+        btnMasuk.className = 'py-2.5 text-xs font-bold rounded-xl border transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 text-gray-600 bg-gray-50 border-gray-200';
+        catLabel.textContent = 'Peruntukan Pengeluaran';
+        catInput.placeholder = 'Contoh: Konsumsi rapat / Cetak spanduk';
       }
     }
 
@@ -218,7 +267,7 @@
     }
 
     function deleteTransaction(id) {
-      if (confirm('Hapus pencatatan transaksi ini?')) {
+      if (confirm('Yakin ingin menghapus transaksi ini?')) {
         transactions = transactions.filter(t => t.id !== id);
         saveAndRender();
       }
@@ -236,7 +285,7 @@
 
     function formatDateIndo(dateStr) {
       if (!dateStr) return '-';
-      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      const options = { year: 'numeric', month: 'short', day: 'numeric' };
       return new Date(dateStr).toLocaleDateString('id-ID', options);
     }
 
@@ -259,35 +308,35 @@
       const isMasuk = t.type === 'masuk';
 
       modalContent.innerHTML = `
-        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
-          <div>
-            <span class="text-[10px] text-gray-500 block">Jenis Transaksi</span>
-            <span class="inline-block mt-0.5 px-2 py-0.5 text-[11px] font-bold rounded ${isMasuk ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+        <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2.5">
+          <div class="flex justify-between items-center">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Jenis Transaksi</span>
+            <span class="px-2.5 py-0.5 text-[10px] font-black rounded-full ${isMasuk ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
               ${isMasuk ? '📥 PEMASUKAN' : '📤 PENGELUARAN'}
             </span>
           </div>
 
           <div>
-            <span class="text-[10px] text-gray-500 block">Tanggal Transaksi</span>
-            <span class="font-semibold text-gray-700">${formatDateIndo(t.date)} (${t.date})</span>
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Tanggal</span>
+            <span class="font-bold text-gray-800">${formatDateIndo(t.date)} (${t.date})</span>
           </div>
 
           <div>
-            <span class="text-[10px] text-gray-500 block">${isMasuk ? 'Sumber Pemasukan' : 'Peruntukan Pengeluaran'}</span>
-            <span class="font-bold text-gray-900">${t.category}</span>
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">${isMasuk ? 'Sumber Pemasukan' : 'Peruntukan Pengeluaran'}</span>
+            <span class="font-extrabold text-gray-900 text-sm">${t.category}</span>
           </div>
 
           <div>
-            <span class="text-[10px] text-gray-500 block">Nominal</span>
-            <span class="text-sm font-extrabold ${isMasuk ? 'text-green-600' : 'text-red-600'}">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Nominal</span>
+            <span class="text-base font-black ${isMasuk ? 'text-emerald-600' : 'text-rose-600'}">
               ${isMasuk ? '+' : '-'}${formatRupiah(t.amount)}
             </span>
           </div>
 
-          <div>
-            <span class="text-[10px] text-gray-500 block">Keterangan / Catatan Tambahan</span>
+          <div class="border-t border-gray-200/60 pt-2">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Catatan Tambahan</span>
             <p class="text-gray-700 font-medium ${t.notes ? '' : 'italic text-gray-400'}">
-              ${t.notes || 'Tidak ada catatan tambahan'}
+              ${t.notes || 'Tidak ada catatan'}
             </p>
           </div>
         </div>
@@ -307,51 +356,54 @@
     function renderList() {
       const container = document.getElementById('txList');
       if (transactions.length === 0) {
-        container.innerHTML = '<p class="text-xs text-center text-gray-400 py-4">Belum ada catatan transaksi.</p>';
+        container.innerHTML = '<p class="text-xs text-center text-gray-400 py-6">Belum ada catatan transaksi.</p>';
         return;
       }
 
       container.innerHTML = transactions.map(t => {
         const isMasuk = t.type === 'masuk';
         return `
-          <div class="p-3 rounded-xl border transition shadow-sm hover:shadow-md ${isMasuk ? 'bg-green-50/70 border-green-200' : 'bg-red-50/70 border-red-200'} space-y-2">
+          <div class="animate-card p-3.5 rounded-2xl border transition-all duration-200 hover:shadow-md ${isMasuk ? 'bg-emerald-50/80 border-emerald-200/80' : 'bg-rose-50/80 border-rose-200/80'} space-y-2">
             
-            <div class="flex justify-between items-center border-b border-gray-200/60 pb-1.5">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isMasuk ? 'bg-green-200 text-green-900' : 'bg-red-200 text-red-900'}">
-                ${isMasuk ? '📥 PEMASUKAN' : '📤 PENGELUARAN'}
+            <!-- Header Kartu -->
+            <div class="flex justify-between items-center border-b border-black/5 pb-1.5">
+              <span class="text-[9px] font-black tracking-wider px-2 py-0.5 rounded-full ${isMasuk ? 'bg-emerald-200/80 text-emerald-900' : 'bg-rose-200/80 text-rose-900'}">
+                ${isMasuk ? '📥 MASUK' : '📤 KELUAR'}
               </span>
-              <span class="text-[11px] font-medium text-gray-500">📅 ${formatDateIndo(t.date)}</span>
+              <span class="text-[10px] font-semibold text-gray-500">📅 ${formatDateIndo(t.date)}</span>
             </div>
 
+            <!-- Konten Utama -->
             <div class="flex justify-between items-start gap-2">
               <div class="space-y-1">
                 <div>
-                  <span class="text-[10px] uppercase tracking-wider text-gray-400 font-bold block">
+                  <span class="text-[9px] uppercase tracking-wider text-gray-400 font-extrabold block">
                     ${isMasuk ? 'Sumber:' : 'Peruntukan:'}
                   </span>
-                  <p class="text-xs font-bold text-gray-800 leading-snug">${t.category}</p>
+                  <p class="text-xs font-black text-gray-800 leading-snug">${t.category}</p>
                 </div>
 
                 <div>
-                  <span class="text-[10px] uppercase tracking-wider text-gray-400 font-bold block">Catatan:</span>
+                  <span class="text-[9px] uppercase tracking-wider text-gray-400 font-extrabold block">Catatan:</span>
                   <p class="text-[11px] text-gray-600 leading-snug ${t.notes ? '' : 'italic text-gray-400'}">
                     ${t.notes ? t.notes : 'Tidak ada catatan'}
                   </p>
                 </div>
               </div>
 
+              <!-- Nominal & Akses -->
               <div class="text-right shrink-0">
-                <p class="text-xs font-black ${isMasuk ? 'text-green-700' : 'text-red-700'}">
+                <p class="text-xs font-black ${isMasuk ? 'text-emerald-700' : 'text-rose-700'}">
                   ${isMasuk ? '+' : '-'}${formatRupiah(t.amount)}
                 </p>
 
                 <div class="flex justify-end gap-2 mt-2">
-                  <button onclick="showDetail(${t.id})" class="text-[10px] font-semibold text-blue-600 hover:underline">
-                    Detail
+                  <button onclick="showDetail(${t.id})" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 active:scale-90 transition">
+                    🔍 Detail
                   </button>
                   <span class="text-gray-300 text-[10px]">|</span>
-                  <button onclick="deleteTransaction(${t.id})" class="text-[10px] font-semibold text-red-500 hover:underline">
-                    Hapus
+                  <button onclick="deleteTransaction(${t.id})" class="text-[10px] font-bold text-rose-500 hover:text-rose-700 active:scale-90 transition">
+                    🗑️ Hapus
                   </button>
                 </div>
               </div>
@@ -374,7 +426,7 @@
         'Tanggal Format': formatDateIndo(t.date),
         'Jenis Transaksi': t.type === 'masuk' ? 'Pemasukan' : 'Pengeluaran',
         'Sumber / Peruntukan': t.category,
-        'Keterangan / Catatan': t.notes || '-',
+        'Catatan': t.notes || '-',
         'Pemasukan (Rp)': t.type === 'masuk' ? t.amount : 0,
         'Pengeluaran (Rp)': t.type === 'keluar' ? t.amount : 0
       }));
@@ -383,7 +435,7 @@
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Kas BEM");
 
-      XLSX.writeFile(workbook, `Laporan_Kas_BEM_${new Date().toISOString().split('T')[0]}.xlsx`);
+      XLSX.writeFile(workbook, `Laporan_Kas_BEM_Senapati_${new Date().toISOString().split('T')[0]}.xlsx`);
     }
 
     renderSummary();
