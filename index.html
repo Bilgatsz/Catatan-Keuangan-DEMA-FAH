@@ -111,15 +111,16 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
+        <!-- Dibuat tersusun ke bawah di HP agar tidak bertabrakan -->
+        <div class="space-y-3">
           <div>
-            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Tanggal</label>
+            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Tanggal Transaksi</label>
             <input type="date" id="txDate" required class="w-full text-xs p-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
           </div>
 
           <div>
             <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nominal (Rp)</label>
-            <input type="number" id="txAmount" min="1" placeholder="50000" required class="w-full text-xs p-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+            <input type="number" id="txAmount" min="1" placeholder="Contoh: 50000" required class="w-full text-xs p-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
           </div>
         </div>
 
@@ -324,7 +325,7 @@
       container.innerHTML = transactions.map(t => {
         const isMasuk = t.type === 'masuk';
         return `
-          <div class="animate-card p-3.5 rounded-2xl border transition-all duration-200 hover:shadow-md ${isMasuk ? 'bg-emerald-50/60 border-emerald-200' : 'bg-rose-50/60 border-rose-200'} space-y-2">
+          <div class="animate-card p-3.5 rounded-2xl border transition-all duration-200 hover:shadow-md ${isMasuk ? 'bg-emerald-50/60 border-emerald-200' : 'bg-rose-50/60 border-rose-200'} space-y-2.5">
             
             <!-- Header Kartu -->
             <div class="flex justify-between items-center border-b border-black/5 pb-1.5">
@@ -334,39 +335,37 @@
               <span class="text-[10px] font-semibold text-gray-500">📅 ${formatDateIndo(t.date)}</span>
             </div>
 
-            <!-- Konten Utama -->
-            <div class="flex justify-between items-start gap-2">
-              <div class="space-y-1">
-                <div>
-                  <span class="text-[9px] uppercase tracking-wider text-gray-400 font-extrabold block">
-                    ${isMasuk ? 'Sumber:' : 'Peruntukan:'}
-                  </span>
-                  <p class="text-xs font-black text-gray-800 leading-snug">${t.category}</p>
-                </div>
-
-                <div>
-                  <span class="text-[9px] uppercase tracking-wider text-gray-400 font-extrabold block">Catatan:</span>
-                  <p class="text-[11px] text-gray-600 leading-snug ${t.notes ? '' : 'italic text-gray-400'}">
-                    ${t.notes ? t.notes : 'Tidak ada catatan'}
-                  </p>
-                </div>
+            <!-- Detail Transaksi -->
+            <div class="space-y-1">
+              <div>
+                <span class="text-[9px] uppercase tracking-wider text-gray-400 font-extrabold block">
+                  ${isMasuk ? 'Sumber:' : 'Peruntukan:'}
+                </span>
+                <p class="text-xs font-black text-gray-800 leading-snug">${t.category}</p>
               </div>
 
-              <!-- Nominal & Akses -->
-              <div class="text-right shrink-0">
-                <p class="text-xs font-black ${isMasuk ? 'text-emerald-700' : 'text-rose-700'}">
-                  ${isMasuk ? '+' : '-'}${formatRupiah(t.amount)}
-                </p>
-
-                <div class="flex justify-end gap-2 mt-2">
-                  <button onclick="showDetail(${t.id})" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 active:scale-90 transition">
-                    🔍 Detail
-                  </button>
-                  <span class="text-gray-300 text-[10px]">|</span>
-                  <button onclick="deleteTransaction(${t.id})" class="text-[10px] font-bold text-rose-500 hover:text-rose-700 active:scale-90 transition">
-                    🗑️ Hapus
-                  </button>
+              ${t.notes ? `
+                <div>
+                  <span class="text-[9px] uppercase tracking-wider text-gray-400 font-extrabold block">Catatan:</span>
+                  <p class="text-[11px] text-gray-600 leading-snug">${t.notes}</p>
                 </div>
+              ` : ''}
+            </div>
+
+            <!-- Nominal & Tombol Aksi (Dibuat Baris Terpisah Agar Tidak Menumpuk) -->
+            <div class="flex justify-between items-center border-t border-black/5 pt-2 mt-1">
+              <p class="text-xs font-black ${isMasuk ? 'text-emerald-700' : 'text-rose-700'}">
+                ${isMasuk ? '+' : '-'}${formatRupiah(t.amount)}
+              </p>
+
+              <div class="flex items-center gap-2">
+                <button onclick="showDetail(${t.id})" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 active:scale-90 transition">
+                  🔍 Detail
+                </button>
+                <span class="text-gray-300 text-[10px]">|</span>
+                <button onclick="deleteTransaction(${t.id})" class="text-[10px] font-bold text-rose-500 hover:text-rose-700 active:scale-90 transition">
+                  🗑️ Hapus
+                </button>
               </div>
             </div>
 
